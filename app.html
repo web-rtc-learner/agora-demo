@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agora CS Team Web Test Site</title>
+    <style type="text/css" content="text/html" ></style>
+    <link rel="stylesheet" href="css/bootstrap.css">
+
+
+</head>
+<body class="container-fluid">
+<div id="web_rtc_test_page">
+    <div id="header_div">
+        <h1>Hello Agora Web RTC</h1>
+    </div>
+    <div id="input_key_div">
+        <div>
+            <label>App ID: </label><input type="text" id="key">
+            <!--<label>faa6368db09949b08b9468087a4c42b9</label>-->
+        </div>
+        <div>
+            Channel ID: <input id="channel" type="text" value="1000" size="4">
+            Host: <input id="host" type="checkbox" checked>
+        </div>
+
+    </div>
+    <div id="control_panel" class="col-md-12">
+        <div class="row">
+            <button type="button" id="start_btn" class="btn btn-primary col-md-6"onclick="test()">start</button>
+            <button type="button" id="leave_btn" class="btn btn-primary col-md-6" onclick="leave()">Leave</button>
+        </div>
+    </div>
+    <div>
+
+        <div id="video" style="margin:0 auto;">
+            <div id="agora_local" style="float:right;width:210px;height:147px;display:inline-block;"></div>
+        </div>
+    </div>
+    <div id="div_device" class="panel panel-default" style="display:none">
+        <div class="select">
+            <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+        </div>
+        <div class="select">
+            <label for="videoSource">Video source: </label><select id="videoSource"></select>
+        </div>
+    </div>
+</div>
+
+</body>
+
+
+<!--<script src="vendor/jQuery_test.js"></script>-->
+<script language="JavaScript">
+
+    function App() {
+
+    }
+
+    App.prototype = {
+        //constructor:App,
+        appID:'faa6368db09949b08b9468087a4c42b9',
+        channelID:'1000',
+        channelKey:null,
+        userID:'',
+        streamID:null,
+        localStream:null,
+        isHost:true,
+        client:null,
+        audioList:[],
+        videoList:[],
+
+        getDevices:function () {
+            AgoraRTC.getDevices(function (devices) {
+                for (var i = 0; i !== devices.length; ++i) {
+                    var device = devices[i];
+                    if (device.kind === 'audioinput') {
+                        this.audioList.push({
+                            text: device.label || 'microphone ' + (this.audioList.length + 1),
+                            value: device.deviceId
+                        });
+
+                    } else if (device.kind === 'videoinput') {
+                        this.videoList.push({
+                            text: device.label || 'camera ' + (this.videoList.length + 1),
+                            value: device.deviceId
+                        });
+                    } else {
+                        console.log('Some other kind of source/device: ', device);
+                    }
+                }
+            });
+        },
+
+        join:function() {
+            this.client = AgoraRTC.createClient({
+                mode: 'interop'
+            });
+
+            this.client.init(this.appID,function () {
+                console.log("this client initialized.");
+                this.client.join(this.channelKey,this.channelID,null,function (uid) {
+                    console.log("client "+ uid + "joined channel");
+                    if(this.isHost) {
+                        var param = {
+                            streamID: this.userID,
+                            audio: true,
+                            cameraId: camera,
+                            microphoneId: microphone,
+                            video: true,
+                            screen: false
+                        };
+                        this.localStream = AgoraRTC.createStream(param);
+                        this.localStream.setVideoProfile('480P');
+                        this.localStream.init(function(){
+                            console.log("get local media successfully");
+                            this.localStream.play('video_id');
+                            this.client.publish(localStream,function () {
+                                console.log("stream published");
+                            }, function (err){
+                                console.error("stream published failed",err);
+                            });
+                        },function (err) {
+                            console.log("local stream init failed",err);
+                        });
+                    }
+                },function(err){
+                    console.error("client failed to join channel", err);
+
+                });
+            },function(err){
+                console.log("this client failed to get initialized.",err);
+            });
+
+
+        },
+        leave:function() {
+
+        },
+    };
+
+
+</script>
+<script src="js/AgoraRTCSDK-1.13.0.js"></script>
+</html>
